@@ -1,0 +1,115 @@
+limit.maxIDLength:
+  - value: 255
+    constraints: {}
+system.forceSearchAttributesCacheRefreshOnRead:
+  - value: false # TODO: Dev setup only. Please don't turn this on in production.
+    constraints: {}
+
+# Производительность Matching в 10 раз выше
+# matching.rps:
+#   - value: 18000
+#     constraints: {}
+# matching.persistenceMaxQPS:
+#   - value: 90000
+#     constraints: {}
+matching.numTaskqueueWritePartitions:
+  - value: 100
+    constraints: {}
+matching.numTaskqueueReadPartitions:
+  - value: 100
+    constraints: {}
+# # matching.maxTaskBatchSize:
+# #   - value: 3000
+# #     constraints: {}
+# # matching.forwarderMaxRatePerSecond:
+# #   - value: 10000
+# #     constraints: {}
+# # matching.forwarderMaxChildrenPerNode:
+# #   - value: 20000
+# #     constraints: {}
+# # matching.forwarderMaxOutstandingTasks:
+# #   - value: 1000
+# #     constraints: {}
+# # matching.forwarderMaxOutstandingPolls:
+# #   - value: 1000
+# #     constraints: {}
+
+# # Производительность History в 10 раз выше
+# history.rps:
+#   - value: 30000
+#     constraints: {}
+# history.persistenceMaxQPS:
+#   - value: 90000
+#     constraints: {}
+# history.visibilityProcessorMaxPollRPS:
+#   - value: 20000
+#     constraints: {}
+# history.visibilityTaskBatchSize:
+#   - value: 5000
+#     constraints: {}
+# history.visibilityProcessorSchedulerWorkerCount:
+#   - value: 51200
+#     constraints: {}
+# history.visibilityQueueMaxReaderCount:
+#   - value: 10000
+#     constraints: {}
+
+# # # Производительность Worker в 10 раз выше
+# worker.persistenceMaxQPS:
+#   - value: 500000
+#     constraints: {}
+# worker.indexerConcurrency:
+#   - value: 10000
+#     constraints: {}
+# worker.ESProcessorNumOfWorkers:
+#   - value: 100
+#     constraints: {}
+
+# # Настройки для кластера Cassandra
+# persistence.maxConns:
+#   - value: 50000
+#     constraints: {}
+# persistence.cassandraMaxConns:
+#   - value: 50000
+#     constraints: {}
+
+# # # Дополнительные настройки производительности
+# # limit.reachabilityTaskQueueScan:
+# #   - value: 2000
+# #     constraints: {}
+# frontend.rps:
+#   - value: 30000
+#     constraints: {}
+# frontend.persistenceMaxQPS:
+#   - value: 900000
+#     constraints: {}
+
+# # # Настройки для больших нагрузок
+# # history.timerQueueMaxReaderCount:
+# #   - value: 20
+# #     constraints: {}
+# # history.transferQueueMaxReaderCount:
+# #   - value: 20
+# #     constraints: {}
+
+# # Настройки для кластера
+# # matching.loadBalancerStickiness:
+# #   - value: 0.8
+# #     constraints: {}
+
+
+# # system.enableNexus:
+# #   - value: false
+# #     constraints: {}
+
+# # matching.pollerScalingDecisionsPerSecond:
+# #   - value: 1000
+# #     constraints: {}
+
+# # matching.useNewMatcher:
+# #   - value: true
+# #     constraints: {}
+
+# # history.visibilityQueueMaxReaderCount:
+# #   - value: 20
+# #     constraints: {}

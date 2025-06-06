@@ -1,0 +1,172 @@
+[project]
+name = "temporalio-playground"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "dependency-injector>=4.47.1",
+    "pydantic>=2.11.5",
+    "pydantic-settings>=2.9.1",
+    "python-dotenv>=1.1.0",
+    "temporalio[opentelemetry]>=1.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6.7",
+    "black>=24.4.2",
+    "isort>=5.13.2",
+    "pytest>=8.2.2",
+    "pytest-asyncio>=0.23.7",
+    "pytest-xdist>=3.6.1",
+    "mypy>=1.10.1",
+    "pre-commit>=3.7.1",
+    "pylint>=3.2.5",
+]
+[build-system]
+requires = ["hatchling", "editables"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "playground",
+]
+
+[project.scripts]
+test-sheduler = 'playground.apps.test_sheduler.main:main'
+test-worker = 'playground.apps.test_worker.main:main'
+
+[tool.pylint.MASTER]
+init-hook = 'import sys; sys.path.append("./playground")'
+
+[tool.pylint.messages_control]
+max-line-length = 120
+
+
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = [ "ALL"]
+# select = ["E4", "E7", "E9", "F"]
+ignore = [
+    "A001", # Variable `filter` is shadowing a Python builtin
+    "A002", # Function argument `filter` is shadowing a Python builtin
+    "PLC0415", # import shoud be top level
+    "D100", # missing docstring in public module
+    "D101", # missing docstring in public class
+    "D102", # missing docstring in public module
+    "D103", # missing docstring in public function
+    "D104", # missing docstring in public package
+    "D107", # Missing docstring in `__init__`
+    "ANN201", # Missing return type annotation for public function `main`
+    'ANN003', # Missing type annotation for `**kwargs`
+    "ANN202", # Missing return type annotation for private function `_handle_filter`
+    "ANN204", # Missing return type annotation for special method `__init__`
+    "SIM117", #Use a single `with` statement with multiple contexts instead of nested `with` statements
+    "SLF001", # Private member accessed:
+    'FBT001', #Boolean-typed positional argument in function definition
+    'FBT002', #Boolean default positional argument in function definition
+    "PLR0913", #Too many arguments in function definition (6 > 5)
+    "SIM102", #Use a single `if` statement instead of nested `if` statements
+    "RET503", #Missing explicit `return` at the end of function able to return non-`None` value
+    "S101", #Use of `assert` detected
+    "PGH003", #Use specific rule codes when ignoring type issues
+    "ERA001", #Found commented-out code
+    "C901", #`run` is too complex
+    "EM102", #Exception must not use an f-string literal, assign to variable first
+    "ANN401", #Dynamically typed expressions (typing.Any) are disallowed in `sms_result`
+    "TID252", # Prefer absolute imports over relative imports from parent modules
+    "PERF401",  # Use a list comprehension to create a transformed list
+    "EM101",  # Exception must not use a string literal, assign to variable first
+    "TRY003",  # Avoid specifying long messages outside the exception class
+    "BLE001",  # Do not catch blind exception: `Exception`
+    "SIM108", # Use ternary operator `sticker = response_wrap.payload.sticker if data.is_2fa is False else response_wrap.payload["sticker"]` instead of `if`-`else`-block
+    "ANN002", # issing type annotation for `*args`
+    "G004", #Logging statement uses f-string
+    "PGH004", #Use specific rule codes when using `noqa`
+    "TRY301", #Abstract `raise` to an inner function
+    "ASYNC109", # Async function definition with a `timeout` parameter
+    "PLR0912", # Too many branches (19 > 12)
+    "D400", #First line should end with a period
+    "D205", #1 blank line required between summary line and description
+    "D401", #First line of docstring should be in imperative mood: "Validating two cookies (only valid and expire)"
+    "PLR2004", #Magic value used in comparison, consider replacing `403` with a constant variable
+    "PLR1714", #Consider merging multiple comparisons. Use a `set` if the elements are hashable.
+    "S311", #Standard pseudo-random generators are not suitable for cryptographic purposes
+    "FIX002", #Line contains TODO, consider resolving the issue
+    "TD002", # Missing author in TODO; try: `# TODO(<author_name>): ...` or `# TODO @<author_name>: ...`
+    "TD003", #Missing issue link on the line following this TODO
+    "PLR2004", #Magic value used in comparison, consider replacing `401` with a constant variable
+    "PLR0915", #Too many statements (59 > 50)
+    "ANN206", #Missing return type annotation for classmethod `pre_handler`
+    "RUF001", # String contains ambiguous `с` (CYRILLIC SMALL LETTER ES). Did you mean `c` (LATIN SMALL LETTER C)?
+"SIM105", #Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+"RUF002",  #RUF002 Docstring contains ambiguous `о` (CYRILLIC SMALL LETTER O). Did you mean `o` (LATIN SMALL LETTER O)?
+"ANN001", #Missing type annotation for function argument `browser_vendor`
+"PLR0911", #Too many return statements (7 > 6)
+"RUF003", #Comment contains ambiguous `с` (CYRILLIC SMALL LETTER ES). Did you mean `c` (LATIN SMALL LETTER C)?
+"ARG001", #Unused function argument: `state`
+"D415", #First line should end with a period, question mark, or exclamation point
+"RUF006", #Store a reference to the return value of `asyncio.create_task`
+"B008", #Do not perform function call `WbSessionRepository` in argument defaults; instead, perform the call within the function, or read the default from a module-level singleton variable
+"ARG004",#Unused static method argument: `raw_number`
+"D404", # First word of the docstring should not be "This"
+"N818", #Exception name `WbBadSeller` should be named with an Error suffix
+"RUF012", #Mutable class attributes should be annotated with `typing.ClassVar`
+"TC002",#Move third-party import `temporalio.client.Client` into a type-checking block
+"TC001",#Move application import `.wb_session.WbSession` into a type-checking block
+"RUF024", # Do not pass mutable objects as values to `dict.fromkeys`
+"PLC0206", # Extracting value from dictionary without calling `.items()`
+"N812",#Lowercase `asyncio` imported as non-lowercase `Redis`
+"ARG002", #Unused method argument: `args`
+
+"D106", #Missing docstring in public nested class
+"B039", #Do not use mutable data structures for `ContextVar` defaults
+"PTH118", #`os.path.join()` should be replaced by `Path` with `/` operator
+"PTH123", # `open()` should be replaced by `Path.open()`
+"PTH100", #`os.path.abspath()` should be replaced by `Path.resolve()`
+"PTH120", #`os.path.dirname()` should be replaced by `Path.parent`
+"FAST002", #FastAPI dependency without `Annotated`
+"FAST001", #FastAPI route with redundant `response_model` argument
+"C408", #Unnecessary `dict()` call (rewrite as a literal)
+
+
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+#
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
+docstring-code-format = false
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = "dynamic"
+

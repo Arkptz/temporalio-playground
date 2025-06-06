@@ -1,0 +1,777 @@
+services:
+  elasticsearch:
+    container_name: temporal-elasticsearch
+    environment:
+      - cluster.routing.allocation.disk.threshold_enabled=true
+      - cluster.routing.allocation.disk.watermark.low=512mb
+      - cluster.routing.allocation.disk.watermark.high=256mb
+      - cluster.routing.allocation.disk.watermark.flood_stage=128mb
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms256m -Xmx256m
+      - xpack.security.enabled=false
+    image: elasticsearch:9.0.2
+    networks:
+      - temporal-network
+    # ports:
+    #   - 9200:9200
+    volumes:
+      - /var/lib/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=1s || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+  # Cassandra cluster from 5 nodes
+  cassandra1:
+    container_name: temporal-cassandra1
+    image: cassandra:4.1.3
+    environment:
+      - CASSANDRA_SEEDS=cassandra1
+      - CASSANDRA_CLUSTER_NAME=temporal
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_NUM_TOKENS=16
+      - HEAP_NEWSIZE=256M
+      - MAX_HEAP_SIZE=1G
+      - CASSANDRA_BROADCAST_ADDRESS=cassandra1
+      - CASSANDRA_LISTEN_ADDRESS=auto
+      - CASSANDRA_RPC_ADDRESS=0.0.0.0
+      - CASSANDRA_START_RPC=true
+      # - JVM_OPTS=-Xss256k -XX:+UseG1GC -XX:G1RSetUpdatingPauseTimePercent=5 -XX:MaxGCPauseMillis=500 -XX:+UseStringDeduplication -XX:+UseLargePages
+    networks:
+      - temporal-network
+    ports:
+      - "7199:7199"
+    volumes:
+      - cassandra1_data:/var/lib/cassandra
+      # - ./cassandra/cassandra1.yaml:/etc/cassandra/cassandra.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -E '^UN|^UJ' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
+
+  cassandra2:
+    container_name: temporal-cassandra2
+    image: cassandra:4.1.3
+    depends_on:
+      cassandra1:
+        condition: service_healthy
+    environment:
+      - CASSANDRA_SEEDS=cassandra1
+      - CASSANDRA_CLUSTER_NAME=temporal
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_NUM_TOKENS=16
+      - HEAP_NEWSIZE=256M
+      - MAX_HEAP_SIZE=1G
+      - CASSANDRA_BROADCAST_ADDRESS=cassandra2
+      - CASSANDRA_LISTEN_ADDRESS=auto
+      - CASSANDRA_RPC_ADDRESS=0.0.0.0
+      - CASSANDRA_START_RPC=true
+      # - JVM_OPTS=-Xss256k -XX:+UseG1GC -XX:G1RSetUpdatingPauseTimePercent=5 -XX:MaxGCPauseMillis=500 -XX:+UseStringDeduplication -XX:+UseLargePages
+    networks:
+      - temporal-network
+    volumes:
+      - cassandra2_data:/var/lib/cassandra
+      # - ./cassandra/cassandra2.yaml:/etc/cassandra/cassandra.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -E '^UN|^UJ' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 240s
+
+  cassandra3:
+    image: cassandra:4.1.3
+    depends_on:
+      cassandra1:
+        condition: service_healthy
+    environment:
+      - CASSANDRA_SEEDS=cassandra1
+      - CASSANDRA_CLUSTER_NAME=temporal
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_RACK=rack2
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_NUM_TOKENS=16
+      - HEAP_NEWSIZE=256M
+      - MAX_HEAP_SIZE=1G
+      - CASSANDRA_BROADCAST_ADDRESS=cassandra3
+      - CASSANDRA_LISTEN_ADDRESS=auto
+      - CASSANDRA_RPC_ADDRESS=0.0.0.0
+      - CASSANDRA_START_RPC=true
+      # - JVM_OPTS=-Xss256k -XX:+UseG1GC -XX:G1RSetUpdatingPauseTimePercent=5 -XX:MaxGCPauseMillis=500 -XX:+UseStringDeduplication -XX:+UseLargePages
+    networks:
+      - temporal-network
+    volumes:
+      - cassandra3_data:/var/lib/cassandra
+      # - ./cassandra/cassandra3.yaml:/etc/cassandra/cassandra.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -E '^UN|^UJ' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 300s
+
+
+  cassandra4:
+    image: cassandra:4.1.3
+    depends_on:
+      cassandra1:
+        condition: service_healthy
+    environment:
+      - CASSANDRA_SEEDS=cassandra1
+      - CASSANDRA_CLUSTER_NAME=temporal
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_RACK=rack2
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_NUM_TOKENS=16
+      - HEAP_NEWSIZE=256M
+      - MAX_HEAP_SIZE=1G
+      - CASSANDRA_BROADCAST_ADDRESS=cassandra4
+      - CASSANDRA_LISTEN_ADDRESS=auto
+      - CASSANDRA_RPC_ADDRESS=0.0.0.0
+      - CASSANDRA_START_RPC=true
+      # - JVM_OPTS=-Xss256k -XX:+UseG1GC -XX:G1RSetUpdatingPauseTimePercent=5 -XX:MaxGCPauseMillis=500 -XX:+UseStringDeduplication -XX:+UseLargePages
+    networks:
+      - temporal-network
+    volumes:
+      - cassandra4_data:/var/lib/cassandra
+      # - ./cassandra/cassandra3.yaml:/etc/cassandra/cassandra.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -E '^UN|^UJ' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 300s
+  cassandra5:
+    image: cassandra:4.1.3
+    depends_on:
+      cassandra1:
+        condition: service_healthy
+    environment:
+      - CASSANDRA_SEEDS=cassandra1
+      - CASSANDRA_CLUSTER_NAME=temporal
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_RACK=rack3
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_NUM_TOKENS=16
+      - HEAP_NEWSIZE=256M
+      - MAX_HEAP_SIZE=1G
+      - CASSANDRA_BROADCAST_ADDRESS=cassandra5
+      - CASSANDRA_LISTEN_ADDRESS=auto
+      - CASSANDRA_RPC_ADDRESS=0.0.0.0
+      - CASSANDRA_START_RPC=true
+      # - JVM_OPTS=-Xss256k -XX:+UseG1GC -XX:G1RSetUpdatingPauseTimePercent=5 -XX:MaxGCPauseMillis=500 -XX:+UseStringDeduplication -XX:+UseLargePages
+    networks:
+      - temporal-network
+    volumes:
+      - cassandra5_data:/var/lib/cassandra
+      # - ./cassandra/cassandra3.yaml:/etc/cassandra/cassandra.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -E '^UN|^UJ' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 300s
+
+
+  cassandra6:
+    image: cassandra:4.1.3
+    depends_on:
+      cassandra1:
+        condition: service_healthy
+    environment:
+      - CASSANDRA_SEEDS=cassandra1
+      - CASSANDRA_CLUSTER_NAME=temporal
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_RACK=rack2
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_NUM_TOKENS=16
+      - HEAP_NEWSIZE=256M
+      - MAX_HEAP_SIZE=1G
+      - CASSANDRA_BROADCAST_ADDRESS=cassandra6
+      - CASSANDRA_LISTEN_ADDRESS=auto
+      - CASSANDRA_RPC_ADDRESS=0.0.0.0
+      - CASSANDRA_START_RPC=true
+      # - JVM_OPTS=-Xss256k -XX:+UseG1GC -XX:G1RSetUpdatingPauseTimePercent=5 -XX:MaxGCPauseMillis=500 -XX:+UseStringDeduplication -XX:+UseLargePages
+    networks:
+      - temporal-network
+    volumes:
+      - cassandra6_data:/var/lib/cassandra
+      # - ./cassandra/cassandra3.yaml:/etc/cassandra/cassandra.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -E '^UN|^UJ' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 300s
+  # cassandra4:
+  #   container_name: temporal-cassandra4
+  #   image: cassandra:4.1.3
+  #   depends_on:
+  #     cassandra1:
+  #       condition: service_healthy
+  #   environment:
+  #     - CASSANDRA_SEEDS=cassandra1
+  #     - CASSANDRA_CLUSTER_NAME=temporal
+  #     - CASSANDRA_DC=datacenter1
+  #     - CASSANDRA_RACK=rack2
+  #     - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+  #     - CASSANDRA_NUM_TOKENS=16
+  #     - HEAP_NEWSIZE=512M
+  #     - MAX_HEAP_SIZE=2G
+  #     - CASSANDRA_BROADCAST_ADDRESS=cassandra4
+  #     - CASSANDRA_LISTEN_ADDRESS=auto
+  #     - CASSANDRA_RPC_ADDRESS=0.0.0.0
+  #     - CASSANDRA_START_RPC=true
+  #     - JVM_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=7199 -Dcom.sun.management.jmxremote.rmi.port=7199 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Djava.rmi.server.hostname=cassandra4
+  #   networks:
+  #     - temporal-network
+  #   volumes:
+  #     - cassandra4_data:/var/lib/cassandra
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "nodetool status | grep -E '^UN|^UJ' || exit 1"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 20
+  #     start_period: 360s
+
+  # cassandra5:
+  #   container_name: temporal-cassandra5
+  #   image: cassandra:4.1.3
+  #   depends_on:
+  #     cassandra1:
+  #       condition: service_healthy
+  #   environment:
+  #     - CASSANDRA_SEEDS=cassandra1
+  #     - CASSANDRA_CLUSTER_NAME=temporal
+  #     - CASSANDRA_DC=datacenter1
+  #     - CASSANDRA_RACK=rack3
+  #     - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+  #     - CASSANDRA_NUM_TOKENS=16
+  #     - HEAP_NEWSIZE=512M
+  #     - MAX_HEAP_SIZE=2G
+  #     - CASSANDRA_BROADCAST_ADDRESS=cassandra5
+  #     - CASSANDRA_LISTEN_ADDRESS=auto
+  #     - CASSANDRA_RPC_ADDRESS=0.0.0.0
+  #     - CASSANDRA_START_RPC=true
+  #     - JVM_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=7199 -Dcom.sun.management.jmxremote.rmi.port=7199 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Djava.rmi.server.hostname=cassandra5
+  #   networks:
+  #     - temporal-network
+  #   volumes:
+  #     - cassandra5_data:/var/lib/cassandra
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "nodetool status | grep -E '^UN|^UJ' || exit 1"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 20
+  #     start_period: 420s
+
+  # Init jobs for setting up infrastructure
+  check-elasticsearch:
+    image: temporalio/admin-tools:1.27.2-tctl-1.18.2-cli-1.3.0
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - temporal-network
+    environment:
+      - ES_HOST=elasticsearch
+      - ES_PORT=9200
+      - ES_SCHEME=http
+      - ES_USER=
+      - ES_PWD=
+    entrypoint: >
+      sh -c "until curl --silent --fail --user \"$$ES_USER:$$ES_PWD\" $$ES_SCHEME://$$ES_HOST:$$ES_PORT 2>&1 > /dev/null; do
+        echo waiting for elasticsearch to start;
+        sleep 5;
+      done;"
+    restart: "no"
+
+  create-default-store:
+    image: temporalio/admin-tools:1.27.2-tctl-1.18.2-cli-1.3.0
+    depends_on:
+      cassandra1:
+        condition: service_healthy
+      cassandra2:
+        condition: service_healthy
+      cassandra3:
+        condition: service_healthy
+    networks:
+      - temporal-network
+    environment:
+      - CASSANDRA_HOST=cassandra1
+      - CASSANDRA_PORT=9042
+      - CASSANDRA_USER=cassandra
+      - CASSANDRA_PASSWORD=cassandra
+    entrypoint: >
+      sh -c "echo 'Waiting for Cassandra cluster to be ready...' &&
+      until temporal-cassandra-tool --ep cassandra1,cassandra2,cassandra3,cassandra4,cassandra5,cassandra6 validate-health; do
+        echo 'Cassandra cluster is unavailable - sleeping';
+        sleep 5;
+      done &&
+      echo 'Cassandra cluster is ready, creating keyspace...' &&
+      for i in 1 2 3 4 5; do
+        echo attempt $$i to create keyspace;
+        temporal-cassandra-tool --ep cassandra1,cassandra2,cassandra3,cassandra4,cassandra5,cassandra6 create -k temporal --rf 2 && break || sleep 5;
+      done"
+    restart: "no"
+
+  setup-default-store:
+    image: temporalio/admin-tools:1.27.2-tctl-1.18.2-cli-1.3.0
+    depends_on:
+      create-default-store:
+        condition: service_completed_successfully
+    networks:
+      - temporal-network
+    environment:
+      - CASSANDRA_HOST=cassandra1
+      - CASSANDRA_PORT=9042
+      - CASSANDRA_USER=cassandra
+      - CASSANDRA_PASSWORD=cassandra
+      - CASSANDRA_KEYSPACE=temporal
+    entrypoint: >
+      sh -c "for i in 1 2 3 4 5; do
+        echo attempt $$i to setup schema;
+        temporal-cassandra-tool --ep cassandra1,cassandra2,cassandra3,cassandra4,cassandra5,cassandra6 -k temporal setup-schema -v 0.0 && break || sleep 5;
+      done"
+    restart: "no"
+
+  update-default-store:
+    image: temporalio/admin-tools:1.27.2-tctl-1.18.2-cli-1.3.0
+    depends_on:
+      setup-default-store:
+        condition: service_completed_successfully
+    networks:
+      - temporal-network
+    environment:
+      - CASSANDRA_HOST=cassandra1
+      - CASSANDRA_PORT=9042
+      - CASSANDRA_USER=cassandra
+      - CASSANDRA_PASSWORD=cassandra
+      - CASSANDRA_KEYSPACE=temporal
+    entrypoint: >
+      sh -c "for i in 1 2 3 4 5; do
+        echo attempt $$i to update schema;
+        temporal-cassandra-tool --ep cassandra1,cassandra2,cassandra3,cassandra4,cassandra5,cassandra6 -k temporal update-schema -d /etc/temporal/schema/cassandra/temporal/versioned && break || sleep 5;
+      done"
+    restart: "no"
+
+  create-visibility-store:
+    image: temporalio/admin-tools:1.27.2-tctl-1.18.2-cli-1.3.0
+    depends_on:
+      update-default-store:
+        condition: service_completed_successfully
+    networks:
+      - temporal-network
+    environment:
+      - CASSANDRA_HOST=cassandra1
+      - CASSANDRA_PORT=9042
+      - CASSANDRA_USER=cassandra
+      - CASSANDRA_PASSWORD=cassandra
+    entrypoint: >
+      sh -c "for i in 1 2 3 4 5; do
+        echo attempt $$i to create visibility keyspace;
+        temporal-cassandra-tool --ep cassandra1,cassandra2,cassandra3,cassandra4,cassandra5,cassandra6 create -k temporal_visibility --rf 2 && break || sleep 5;
+      done"
+    restart: "no"
+
+  setup-visibility-store:
+    image: temporalio/admin-tools:1.27.2-tctl-1.18.2-cli-1.3.0
+    depends_on:
+      create-visibility-store:
+        condition: service_completed_successfully
+      check-elasticsearch:
+        condition: service_completed_successfully
+    networks:
+      - temporal-network
+    environment:
+      - ES_HOST=elasticsearch
+      - ES_PORT=9200
+      - ES_SCHEME=http
+      - ES_USER=
+      - ES_PWD=
+      - ES_VERSION=v7
+      - ES_VISIBILITY_INDEX=temporal_visibility_v1_dev
+    entrypoint: >
+      sh -c "for i in 1 2 3 4 5; do
+        echo attempt $$i to setup visibility store;
+        curl -X PUT --fail --user \"$$ES_USER:$$ES_PWD\" $$ES_SCHEME://$$ES_HOST:$$ES_PORT/_template/temporal_visibility_v1_template -H \"Content-Type: application/json\" --data-binary \"@schema/elasticsearch/visibility/index_template_$$ES_VERSION.json\" 2>&1 &&
+        (curl --head --fail --user \"$$ES_USER:$$ES_PWD\" $$ES_SCHEME://$$ES_HOST:$$ES_PORT/$$ES_VISIBILITY_INDEX 2>&1 ||
+        curl -X PUT --fail --user \"$$ES_USER:$$ES_PWD\" $$ES_SCHEME://$$ES_HOST:$$ES_PORT/$$ES_VISIBILITY_INDEX 2>&1) && break || sleep 5;
+      done"
+    restart: "no"
+
+  temporalio-history:
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      update-default-store:
+        condition: service_completed_successfully
+      setup-visibility-store:
+        condition: service_completed_successfully
+    environment:
+      - SERVICES=history
+      - TEMPORAL_STORE_PASSWORD=root
+      - TEMPORAL_VISIBILITY_STORE_PASSWORD=
+      - TEMPORAL_ADDRESS=temporalio-internal-frontend:7233
+      - USE_INTERNAL_FRONTEND=1
+    image: temporalio/server:1.27.2
+    networks:
+      - temporal-network
+    volumes:
+      - ./dynamicconfig/dynamic_config_cass.yaml:/etc/temporal/dynamic_config/dynamic_config.yaml
+      - ./config_cassandra.yaml:/etc/temporal/config/config_template.yaml
+    entrypoint: ["sh", "-c", "export POD_IP=$$(hostname -i | awk '{print $$1}') && exec /etc/temporal/entrypoint.sh"]
+  temporalio-matching:
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      update-default-store:
+        condition: service_completed_successfully
+      setup-visibility-store:
+        condition: service_completed_successfully
+    environment:
+      - SERVICES=matching
+      - TEMPORAL_STORE_PASSWORD=root
+      - TEMPORAL_VISIBILITY_STORE_PASSWORD=
+      - TEMPORAL_ADDRESS=temporalio-internal-frontend:7233
+      - USE_INTERNAL_FRONTEND=1
+    image: temporalio/server:1.27.2
+    networks:
+      - temporal-network
+    volumes:
+      - ./dynamicconfig/dynamic_config_cass.yaml:/etc/temporal/dynamic_config/dynamic_config.yaml
+      - ./config_cassandra.yaml:/etc/temporal/config/config_template.yaml
+    entrypoint: ["sh", "-c", "export POD_IP=$$(hostname -i | awk '{print $$1}') && exec /etc/temporal/entrypoint.sh"]
+  temporalio-worker:
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      update-default-store:
+        condition: service_completed_successfully
+      setup-visibility-store:
+        condition: service_completed_successfully
+    environment:
+      - SERVICES=worker
+      - TEMPORAL_STORE_PASSWORD=root
+      - TEMPORAL_VISIBILITY_STORE_PASSWORD=
+      - TEMPORAL_ADDRESS=temporalio-internal-frontend:7233
+      - USE_INTERNAL_FRONTEND=1
+    image: temporalio/server:1.27.2
+    networks:
+      - temporal-network
+    volumes:
+      - ./dynamicconfig/dynamic_config_cass.yaml:/etc/temporal/dynamic_config/dynamic_config.yaml
+      - ./config_cassandra.yaml:/etc/temporal/config/config_template.yaml
+    entrypoint: ["sh", "-c", "export POD_IP=$$(hostname -i | awk '{print $$1}') && exec /etc/temporal/entrypoint.sh"]
+  temporalio-frontend:
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      update-default-store:
+        condition: service_completed_successfully
+      setup-visibility-store:
+        condition: service_completed_successfully
+    environment:
+      - SERVICES=frontend
+      - TEMPORAL_STORE_PASSWORD=root
+      - TEMPORAL_ADDRESS=temporalio-internal-frontend:7233
+      - TEMPORAL_VISIBILITY_STORE_PASSWORD=
+      - USE_INTERNAL_FRONTEND=1
+    image: temporalio/server:1.27.2
+    networks:
+      - temporal-network
+    volumes:
+      - ./dynamicconfig/dynamic_config_cass.yaml:/etc/temporal/dynamic_config/dynamic_config.yaml
+      - ./config_cassandra.yaml:/etc/temporal/config/config_template.yaml
+    entrypoint: ["sh", "-c", "export POD_IP=$$(hostname -i | awk '{print $$1}') && exec /etc/temporal/entrypoint.sh"]
+  temporalio-internal-frontend:
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      update-default-store:
+        condition: service_completed_successfully
+      setup-visibility-store:
+        condition: service_completed_successfully
+    environment:
+      - SERVICES=internal-frontend
+      - TEMPORAL_STORE_PASSWORD=root
+      - TEMPORAL_VISIBILITY_STORE_PASSWORD=
+      - TEMPORAL_ADDRESS=temporalio-internal-frontend:7233
+      - USE_INTERNAL_FRONTEND=1
+    image: temporalio/server:1.27.2
+    networks:
+      - temporal-network
+    volumes:
+      - ./dynamicconfig/dynamic_config_cass.yaml:/etc/temporal/dynamic_config/dynamic_config.yaml
+      - ./config_cassandra.yaml:/etc/temporal/config/config_template.yaml
+    entrypoint: ["sh", "-c", "export POD_IP=$$(hostname -i | awk '{print $$1}') && exec /etc/temporal/entrypoint.sh"]
+
+  create-default-namespace:
+    image: temporalio/admin-tools:1.27.2-tctl-1.18.2-cli-1.3.0
+    depends_on:
+      - temporalio-internal-frontend
+    networks:
+      - temporal-network
+    environment:
+      - TEMPORAL_ADDRESS=temporalio-internal-frontend:7236
+    entrypoint: >
+      sh -c "until nc -z temporalio-internal-frontend 7236; do
+        echo waiting for temporal internal-frontend to start on port 7236;
+        sleep 5;
+      done &&
+      echo internal-frontend is ready, creating namespace... &&
+      for i in 1 2 3 4 5; do
+        echo attempt $$i to create namespace;
+        temporal operator namespace describe -n default && break ||
+        temporal operator namespace create -n default --retention 3d && break ||
+        sleep 10;
+      done"
+    restart: "no"
+
+  temporal-admin-tools:
+    container_name: temporal-admin-tools
+    depends_on:
+      - temporalio-internal-frontend
+    environment:
+      - TEMPORAL_ADDRESS=temporalio-internal-frontend:7233
+      - TEMPORAL_CLI_ADDRESS=temporalio-internal-frontend:7233
+    image: temporalio/admin-tools:1.27.2-tctl-1.18.2-cli-1.3.0
+    networks:
+      - temporal-network
+    stdin_open: true
+    tty: true
+
+
+  temporal-ui:
+    container_name: temporal-ui
+    depends_on:
+      - temporalio-frontend
+    environment:
+      - TEMPORAL_ADDRESS=temporalio-frontend:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    image: temporalio/ui:v2.37.4
+    networks:
+      - temporal-network
+    ports:
+      - 8085:8080
+
+  benchmark-workers:
+    image: ghcr.io/temporalio/benchmark-workers:latest
+    deploy:
+      mode: replicated
+      replicas: 15
+    restart: always
+    depends_on:
+      - temporalio-frontend
+      - temporalio-internal-frontend
+      - temporalio-history
+      - temporalio-matching
+      - temporalio-worker
+      - create-default-namespace
+    networks:
+      - temporal-network
+    environment:
+      TEMPORAL_GRPC_ENDPOINT: "temporalio-frontend:7233"
+      TEMPORAL_NAMESPACE: "default"
+      TEMPORAL_TASK_QUEUE: "benchmark"
+      TEMPORAL_WORKFLOW_TASK_POLLERS: "32"
+      TEMPORAL_ACTIVITY_TASK_POLLERS: "32"
+  # benchmark-workers2:
+  #   image: ghcr.io/temporalio/benchmark-workers:latest
+  #   deploy:
+  #     mode: replicated
+  #     replicas: 1
+  #   restart: always
+  #   depends_on:
+  #     - temporalio-frontend
+  #     - temporalio-internal-frontend
+  #     - temporalio-history
+  #     - temporalio-matching
+  #     - temporalio-worker
+  #     - create-default-namespace
+  #   networks:
+  #     - temporal-network
+  #   environment:
+  #     TEMPORAL_GRPC_ENDPOINT: "temporalio-frontend:7233"
+  #     TEMPORAL_NAMESPACE: "default"
+  #     TEMPORAL_TASK_QUEUE: "benchmark2"
+  #     TEMPORAL_WORKFLOW_TASK_POLLERS: "32"
+  #     TEMPORAL_ACTIVITY_TASK_POLLERS: "32"
+  benchmark-soak-test:
+    image: ghcr.io/temporalio/benchmark-workers:latest
+    restart: always
+    depends_on:
+      - temporalio-frontend
+      - temporalio-internal-frontend
+      - temporalio-history
+      - temporalio-matching
+      - temporalio-worker
+      - create-default-namespace
+    networks:
+      - temporal-network
+    environment:
+      TEMPORAL_GRPC_ENDPOINT: "temporalio-frontend:7233"
+      TEMPORAL_NAMESPACE: "default"
+      TEMPORAL_TASK_QUEUE: "benchmark"
+      CONCURRENT_WORKFLOWS: "1"
+    command: ["runner", "-w", "-c", "500", "-t", "ExecuteActivity", '{ "Count": 3, "Activity": "Echo", "Input": { "Message": "test" } }']
+
+  # benchmark-soak-test2:
+  #   image: ghcr.io/temporalio/benchmark-workers:latest
+  #   restart: always
+  #   depends_on:
+  #     - temporalio-frontend
+  #     - temporalio-internal-frontend
+  #     - temporalio-history
+  #     - temporalio-matching
+  #     - temporalio-worker
+  #     - create-default-namespace
+  #   networks:
+  #     - temporal-network
+  #   environment:
+  #     TEMPORAL_GRPC_ENDPOINT: "temporalio-frontend:7233"
+  #     TEMPORAL_NAMESPACE: "default"
+  #     TEMPORAL_TASK_QUEUE: "benchmark2"
+  #     CONCURRENT_WORKFLOWS: "1"
+  #   command: ["runner", "-w", "-c", "100", "-t", "ExecuteActivity", '{ "Count": 3, "Activity": "Echo", "Input": { "Message": "test" } }']
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: temporal-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - temporal-network
+    depends_on:
+      - temporalio-frontend
+      - temporalio-history
+      - temporalio-matching
+      - temporalio-worker
+
+  # Node Exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: temporal-node-exporter
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    ports:
+      - "9100:9100"
+    networks:
+      - temporal-network
+
+  # Cassandra Exporter for Cassandra cluster metrics
+  # cassandra-exporter:
+  #   image: criteord/cassandra_exporter:latest
+  #   container_name: temporal-cassandra-exporter
+  #   environment:
+  #     - CASSANDRA_EXPORTER_CONFIG_host=cassandra1
+  #     - CASSANDRA_EXPORTER_CONFIG_jmxPort=7199
+  #     - CASSANDRA_EXPORTER_CONFIG_ssl=false
+  #     - JVM_OPTS=-Xmx256m
+  #   ports:
+  #     - "9104:8080"
+  #   networks:
+  #     - temporal-network
+  #   depends_on:
+  #     cassandra1:
+  #       condition: service_healthy
+  #     cassandra2:
+  #       condition: service_healthy
+  #     cassandra3:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  # Elasticsearch Exporter for Elasticsearch metrics
+  elasticsearch-exporter:
+    image: quay.io/prometheuscommunity/elasticsearch-exporter:v1.9.0
+    container_name: temporal-elasticsearch-exporter
+    command:
+      - '--log.format=logfmt'
+      - '--log.level=info'
+      - '--es.uri=http://elasticsearch:9200'
+      - '--es.all'
+      - '--es.indices'
+      - '--es.indices_settings'
+      - '--es.indices_mappings'
+      - '--es.shards'
+      - '--collector.snapshots'
+      - '--es.timeout=30s'
+      - '--web.listen-address=:9108'
+      - '--web.telemetry-path=/metrics'
+    ports:
+      - "9108:9108"
+    networks:
+      - temporal-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9108/metrics || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: temporal-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3001:3000"
+    networks:
+      - temporal-network
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  cassandra1_data:
+  cassandra2_data:
+  cassandra3_data:
+  cassandra4_data:
+  cassandra5_data:
+  cassandra6_data:
+
+networks:
+  temporal-network:
+    driver: bridge
+    name: temporal-network

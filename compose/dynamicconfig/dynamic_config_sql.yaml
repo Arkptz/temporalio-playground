@@ -1,0 +1,126 @@
+limit.maxIDLength:
+  - value: 255
+    constraints: {}
+system.forceSearchAttributesCacheRefreshOnRead:
+  - value: false # TODO: Dev setup only. Please don't turn this on in production.
+    constraints: {}
+matching.rps:
+  - value: 7200
+    constraints: {}
+matching.persistenceMaxQPS:
+  - value: 18000
+    constraints: {}
+matching.numTaskqueueWritePartitions:
+  - value: 1000
+    constraints: {}
+matching.numTaskqueueReadPartitions:
+  - value: 1000
+    constraints: {}
+matching.maxTaskBatchSize: #MatchingMaxTaskBatchSize is max batch size for task writer
+  - value: 3009
+    constraints: {}
+matching.forwarderMaxRatePerSecond: #MatchingForwarderMaxRatePerSecond is the max rate at which add/query can be forwarded
+  - value: 1000
+    constraints: {}
+matching.forwarderMaxChildrenPerNode: #MatchingForwarderMaxChildrenPerNode is the max number of children per node in the task queue partition tree
+  - value: 2000
+    constraints: {}
+history.timerProcessorMaxPollRPS:
+  - value: 1000
+    constraints: {}
+# history.timerProcessorMaxPollHostRPS:
+#   - value: 1000
+#     constraints: {}
+
+history.outboundProcessorMaxPollRPS:
+  - value: 1000
+    constraints: {}
+
+
+history.visibilityProcessorMaxPollRPS:
+  - value: 1000
+    constraints: {}
+
+# limit.reachabilityTaskQueueScan:
+#   - value: 200
+#     constraints: {}
+
+
+matching.forwarderMaxOutstandingTasks:
+  - value: 10000
+    constraints: {}
+
+matching.forwarderMaxOutstandingPolls:
+  - value: 1000
+    constraints: {}
+
+
+history.rps:
+  - value: 9000
+    constraints: {}
+
+history.persistenceMaxQPS:
+  - value: 18000
+    constraints: {}
+
+
+
+frontend.rps:
+  - value: 9000
+    constraints: {}
+
+frontend.persistenceMaxQPS:
+  - value: 18000
+    constraints: {}
+internal-frontend.rps:
+  - value: 9000
+    constraints: {}
+
+internal-frontend.persistenceMaxQPS:
+  - value: 18000
+    constraints: {}
+
+
+
+# history.visibilityProcessorMaxPollRPS:
+#   - value: 2000
+#     constraints: {}
+
+# history.visibilityTaskBatchSize:
+#   - value: 500
+#     constraints: {}
+
+# history.visibilityProcessorSchedulerWorkerCount:
+#   - value: 5120
+#     constraints: {}
+
+# history.visibilityQueueMaxReaderCount:
+#   - value: 1000
+#     constraints: {}
+
+
+worker.persistenceMaxQPS:
+  - value: 5000
+    constraints: {}
+
+
+# worker.indexerConcurrency:
+#   - value: 1000
+
+worker.ESProcessorNumOfWorkers:
+  - value: 10
+    constraints: {}
+worker.ESProcessorBulkActions:
+  - value: 2500
+    constraints: {}
+
+system.deadlock.MaxWorkersPerRoot:
+  - value: 10000
+    constraints: {}
+
+
+
+worker.schedulerNamespaceStartWorkflowRPS:
+  - value: 1000
+    constraints: {}
+

@@ -1,0 +1,95 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Node Exporter для системных метрик
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # MySQL Exporter для метрик MySQL
+  - job_name: 'mysql-exporter'
+    static_configs:
+      - targets: ['mysqld-exporter:9104']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Elasticsearch Exporter для метрик Elasticsearch
+  - job_name: 'elasticsearch-exporter'
+    static_configs:
+      - targets: ['elasticsearch-exporter:9108']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  - job_name: 'temporal-frontend'
+    static_configs:
+      - targets: ['temporalio-frontend:9090']
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 10s
+
+  - job_name: 'temporal-history'
+    static_configs:
+      - targets: ['temporalio-history:9090']
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 10s
+
+  - job_name: 'temporal-matching'
+    static_configs:
+      - targets: ['temporalio-matching:9090']
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 10s
+
+  - job_name: 'temporal-worker'
+    static_configs:
+      - targets: ['temporalio-worker:9090']
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 10s
+
+  - job_name: 'temporal-internal-frontend'
+    static_configs:
+      - targets: ['temporalio-internal-frontend:9090']
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 10s
+
+  # Docker containers metrics discovery
+  - job_name: 'docker-containers'
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 30s
+    relabel_configs:
+      - source_labels: [__meta_docker_container_label_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_docker_container_label_prometheus_io_path]
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_docker_container_label_prometheus_io_port]
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+      - source_labels: [__meta_docker_container_name]
+        target_label: container_name
+        regex: /(.+)
+        replacement: $1
